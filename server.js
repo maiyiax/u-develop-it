@@ -17,6 +17,8 @@ const db = new sqlite3.Database('./db/election.db', err => {
     console.log('Connected to the election database.');
 });
 
+//<----------- Candidates Code Block Begins -------------------------------------------->//
+
 // this returns all the data in the candidates table wrapped inside an Express GET route
 app.get('/api/candidates', (req, res) => {
     const sql = `SELECT candidates.*, parties.name
@@ -104,8 +106,85 @@ app.post('/api/candidate', ({ body }, res) => {
     });
 });
 
-// end code ============================================================================//
+// end create ==========================================================================//
 
+// Updating a Candidate ================================================================//
+
+app.put('/api/candidate/:id', (req, res) => {
+    const errors = inputCheck(req.body, 'party_id');
+
+    if (errors) {
+        res.status(400).json({ error: errors }); 
+    };
+    
+    const sql = `UPDATE candidates SET party_id = ?
+                WHERE id = ?`;
+    const params = [req.body.party_id, req.params.id];
+
+    db.run(sql, params, function(err, result) {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+
+        res.json({
+            message: 'success',
+            data: req.body,
+            changes: this.changes
+        });
+    });
+});
+
+//<----------- Candidates Code Block END --------------------------------------------->//
+
+// <-------------- Parties Code Block Begins ----------------------------------------> //
+
+app.get('/api/parties', (req, res) => {
+    const sql = `SELECT * FROM parties`;
+    const params = [];
+    db.all(sql, params, (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+
+        res.json({
+            message: 'success',
+            data: rows
+        });
+    });
+});
+
+app.get('/api/party/:id', (req, res) => {
+    const sql = `SELECT * FROM parties WHERE id = ?`;
+    const params = [req.params.id];
+    db.get(sql, params, (err, row) => {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+
+        res.json({
+            message: 'success',
+            data: row
+        });
+    });
+});
+
+app.delete('/api/party/:id', (req, res) => {
+    const sql = `DELETE FROM parties WHERE id = ?`;
+    const params = [req.params.id];
+    db.run(sql, params, function (err, result) {
+        if (err) {
+            res.status(400).json({ error: res.message });
+            return;
+        }
+
+        res.json({ message: 'successfully deleted', changes: this.changes });
+    });
+});
+
+// <-------------- Parties Code Block Ends ------------------------------------------> //
 
 // Default response for any other request(Not Found) Catch all
 app.use((req, res) => {
