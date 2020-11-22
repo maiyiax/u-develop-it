@@ -1,4 +1,3 @@
-const { restElement } = require('@babel/types');
 const express = require('express');
 const router = express.Router();
 const db = require('../../db/database');
